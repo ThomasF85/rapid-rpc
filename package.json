@@ -1,7 +1,7 @@
 {
   "name": "rapid-rpc",
   "version": "0.0.1",
-  "description": "lightweight, typesafe, scalable remote procedure calls",
+  "description": "lightweight, typesafe, and scalable remote procedure calls",
   "main": "index.js",
   "module": "esm/index.js",
   "types": "index.d.ts",
