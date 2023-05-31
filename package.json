@@ -1,0 +1,56 @@
+{
+  "name": "rapid-rpc",
+  "version": "0.0.1",
+  "description": "lightweight, typesafe, scalable remote procedure calls",
+  "main": "index.js",
+  "module": "esm/index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.*",
+    "client.*",
+    "esm"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./esm/index.js",
+      "default": "./index.js"
+    },
+    "./client": {
+      "types": "./client.d.ts",
+      "import": "./esm/client.js",
+      "default": "./client.js"
+    }
+  },
+  "scripts": {
+    "build:server": "parcel build src/server/index.ts",
+    "build:client": "parcel build src/client/index.ts",
+    "clean": "rm -rf esm && rm index.* client.*",
+    "prettier:write": "npx prettier --write src/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThomasF85/rapid-rpc.git"
+  },
+  "keywords": [
+    "rpc"
+  ],
+  "author": "ThomasF85",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ThomasF85/rapid-rpc/issues"
+  },
+  "homepage": "https://github.com/ThomasF85/rapid-rpc#readme",
+  "devDependencies": {
+    "@parcel/packager-ts": "^2.9.1",
+    "@parcel/transformer-typescript-types": "^2.9.1",
+    "parcel": "^2.9.1",
+    "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "next": "^13.4.4",
+    "react": "^18.2.0",
+    "swr": "^2.1.5"
+  }
+}
