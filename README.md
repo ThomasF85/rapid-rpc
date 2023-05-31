@@ -1,6 +1,8 @@
 # rapid-rpc
 
-A lightweight, typesafe, and scalable way of writing APIs in your Next.js project. Build to work with the App Router and server and client components.
+A lightweight, typesafe, and scalable way of writing APIs that works with Next.js. Build to work with the App Router and server and client components.
+
+> **This is an experimental version not meant for production use**
 
 ## Create your API
 

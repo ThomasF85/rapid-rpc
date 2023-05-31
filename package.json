@@ -1,6 +1,6 @@
 {
   "name": "rapid-rpc",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha.0",
   "description": "lightweight, typesafe, and scalable remote procedure calls",
   "main": "index.js",
   "module": "esm/index.js",
@@ -49,8 +49,8 @@
     "typescript": "^5.0.4"
   },
   "peerDependencies": {
-    "next": "^13.4.4",
-    "react": "^18.2.0",
-    "swr": "^2.1.5"
+    "next": "^13.0.1",
+    "react": "^18.0.0",
+    "swr": "^2.0.0"
   }
 }
