@@ -69,6 +69,7 @@ export function combine<
   connector: Connector
 ];
 
+// TODO: refactor to work with batching
 export function combine(...apis: any[]) {
   verifyUniqueMethodNames(apis);
   let serverApi = { queries: {}, mutations: {} };
