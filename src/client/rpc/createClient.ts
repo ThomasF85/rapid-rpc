@@ -1,20 +1,31 @@
 "use client";
 
 import { ClientApiType } from "./types";
-import { postFunction } from "./fetcher";
+import { getFetcher, postFunction } from "./fetcher";
 import { useMemo } from "react";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { getBatchFetcher } from "./batchFetcher";
+
+export interface ClientOptions {
+  batching?: boolean;
+}
+
+const defaultOptions: ClientOptions = {
+  batching: true,
+};
 
 export function createClient<
   T extends {
     queries: { [key: string]: (...args: any[]) => any };
     mutations: { [key: string]: (...args: any[]) => any };
   }
->(path: string): ClientApiType<T> {
-  // TODO: make fetcher also accept path argument and add check for "/" in path
-  const fetcher = getBatchFetcher(path);
+>(path: string, options?: ClientOptions): ClientApiType<T> {
+  const thisOptions: ClientOptions = { ...defaultOptions, ...(options || {}) };
+  const basePath: string = `${path}${path.endsWith("/") ? "" : "/"}`;
+  const fetcher = thisOptions.batching
+    ? getBatchFetcher(basePath)
+    : getFetcher(basePath);
   const handler = {
     get(target: any, prop: string) {
       // todo: check what to do about $$typeof and prototype
@@ -29,7 +40,7 @@ export function createClient<
       target[prop] = {
         useQuery: (...args: any) => useSWR([prop, args], fetcher),
         useQueryOptions: (options: any, ...args: any) =>
-          useSWR([basePath, args], fetcher, options),
+          useSWR([prop, args], fetcher, options),
         useMutation: (options?: any) => {
           const mutationResult: any = useSWRMutation(
             basePath,

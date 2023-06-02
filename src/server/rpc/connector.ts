@@ -81,7 +81,7 @@ function createProcedureHandler(
           : await procedures[procedure](ctx, ...args);
         return successResponse(data);
       } catch (error: any) {
-        return errorResponse(error.message);
+        return errorResponse.INTERNAL_SERVER_ERROR(error.message);
       }
     });
   }
@@ -107,22 +107,50 @@ async function createResponse(
       const methodName = methods[index];
       const procedure = methodMap.get(methodName);
       if (!procedure) {
-        response.push(errorResponse(`${type} ${methodName} not found`));
+        response.push(
+          errorResponse.NOT_FOUND(`${type} ${methodName} not found`)
+        );
       }
       const args: any[] = batchArgs[index];
       const allArgs = getContext ? [context, ...args] : args;
       response.push(await procedure!(...allArgs));
     }
-    return NextResponse.json(response);
+    const status: number = getStatus(response);
+    return status === 200
+      ? NextResponse.json(response)
+      : NextResponse.json(response, { status });
   } else {
     const procedure = methodMap.get(method);
     if (!procedure) {
-      return NextResponse.json(errorResponse(`${type} ${method} not found`), {
-        status: 404,
+      const response: RPCResponse = errorResponse.NOT_FOUND(
+        `${type} ${method} not found`
+      );
+      return NextResponse.json(response, {
+        status: response.error!.json.data.httpStatus,
       });
     }
     const args: any[] = decodeArguments(rawInput);
     const allArgs = getContext ? [await getContext(), ...args] : args;
-    return NextResponse.json(await procedure(...allArgs));
+    const response = await procedure(...allArgs);
+    return response.error
+      ? NextResponse.json(response, {
+          status: response.error!.json.data.httpStatus,
+        })
+      : NextResponse.json(response);
   }
+}
+
+function getStatus(responses: RPCResponse[]): number {
+  const status: number = responses[0].result
+    ? 200
+    : responses[0].error!.json.data.httpStatus;
+  for (const response of responses) {
+    const currentStatus: number = response.result
+      ? 200
+      : response.error!.json.data.httpStatus;
+    if (status !== currentStatus) {
+      return 207;
+    }
+  }
+  return status;
 }

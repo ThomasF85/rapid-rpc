@@ -5,6 +5,10 @@ export interface RPCResponse {
   error?: {
     json: {
       message: string;
+      code: number;
+      data: {
+        httpStatus: number;
+      };
     };
   };
 }
