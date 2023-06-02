@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { RPCResponse } from "../../types";
 
 export interface Connector {
   GET: (
@@ -13,6 +14,12 @@ export interface Connector {
       params: { method: string };
     }
   ) => Promise<Response>;
+}
+
+export interface InternalConnector {
+  _getContext?: () => Promise<any> | any;
+  _get: Map<string, (...args: any[]) => Promise<RPCResponse>>;
+  _post: Map<string, (...args: any[]) => Promise<RPCResponse>>;
 }
 
 export interface ApiOptions<

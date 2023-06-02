@@ -2,9 +2,9 @@
   "name": "rapid-rpc",
   "version": "0.0.1-alpha.0",
   "description": "lightweight, typesafe, and scalable remote procedure calls",
-  "main": "index.js",
-  "module": "esm/index.js",
-  "types": "index.d.ts",
+  "main": "client.js",
+  "module": "esm/client.js",
+  "types": "client.d.ts",
   "files": [
     "index.*",
     "client.*",
