@@ -1,11 +1,11 @@
 "use client";
 
 import { ClientApiType } from "./types";
-import { getFetcher, postFunction } from "./fetcher";
+import { getFetcher, getPostFunction } from "./fetcher";
 import { useMemo } from "react";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { getBatchFetcher } from "./batchFetcher";
+import { getBatchFetcher, getBatchPostFunction } from "./batchFetcher";
 
 export interface ClientOptions {
   batching?: boolean;
@@ -26,6 +26,9 @@ export function createClient<
   const fetcher = thisOptions.batching
     ? getBatchFetcher(basePath)
     : getFetcher(basePath);
+  const postFunction = thisOptions.batching
+    ? getBatchPostFunction(basePath)
+    : getPostFunction(basePath);
   const handler = {
     get(target: any, prop: string) {
       // todo: check what to do about $$typeof and prototype
@@ -35,15 +38,13 @@ export function createClient<
       if (target.hasOwnProperty(prop)) {
         return target[prop];
       }
-      // TODO: remove when not needed
-      const basePath: string = `${path}${path.endsWith("/") ? "" : "/"}${prop}`;
       target[prop] = {
         useQuery: (...args: any) => useSWR([prop, args], fetcher),
         useQueryOptions: (options: any, ...args: any) =>
           useSWR([prop, args], fetcher, options),
         useMutation: (options?: any) => {
           const mutationResult: any = useSWRMutation(
-            basePath,
+            prop,
             postFunction,
             options
           );

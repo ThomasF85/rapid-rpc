@@ -3,13 +3,6 @@ import { Connector, InternalConnector, MiddlewareOptions } from "./types";
 import { BatchInputArguments, RPCResponse } from "../../types";
 import { errorResponse, successResponse } from "./rpcResponse";
 
-function decodeArguments(serialized: string | null): any[] {
-  if (serialized === null) {
-    return [];
-  }
-  return JSON.parse(decodeURIComponent(serialized));
-}
-
 export function getConnector<
   Q extends { [key: string]: (...args: any[]) => any },
   M extends { [key: string]: (...args: any[]) => any }
@@ -31,11 +24,15 @@ export function getConnector<
         params: { method: string };
       }
     ): Promise<Response> => {
+      const input = request.nextUrl.searchParams.get("input");
+      const args: any[] | BatchInputArguments = input
+        ? JSON.parse(decodeURIComponent(input))
+        : [];
       return await createResponse(
         "query",
         params.params.method,
         !!request.nextUrl.searchParams.get("batch"),
-        request.nextUrl.searchParams.get("input")!,
+        args,
         internalConnector._get,
         getContext
       );
@@ -46,11 +43,12 @@ export function getConnector<
         params: { method: string };
       }
     ): Promise<Response> => {
+      const args: any[] | BatchInputArguments = await request.json();
       return await createResponse(
         "mutation",
         params.params.method,
         !!request.nextUrl.searchParams.get("batch"),
-        request.nextUrl.searchParams.get("input")!,
+        args,
         internalConnector._post,
         getContext
       );
@@ -92,16 +90,14 @@ async function createResponse(
   type: "query" | "mutation",
   method: string,
   batch: boolean,
-  rawInput: string,
+  args: any[] | BatchInputArguments,
   methodMap: Map<string, (...args: any[]) => Promise<RPCResponse>>,
   getContext?: () => any
 ) {
   if (batch) {
     const response: RPCResponse[] = [];
     const methods: string[] = method.split(",");
-    const batchArgs: BatchInputArguments = JSON.parse(
-      decodeURIComponent(rawInput)
-    );
+    const batchArgs: BatchInputArguments = args;
     const context = getContext ? await getContext() : null;
     for (let index = 0; index < methods.length; index++) {
       const methodName = methods[index];
@@ -129,8 +125,9 @@ async function createResponse(
         status: response.error!.json.data.httpStatus,
       });
     }
-    const args: any[] = decodeArguments(rawInput);
-    const allArgs = getContext ? [await getContext(), ...args] : args;
+    const allArgs = getContext
+      ? [await getContext(), ...(args as any[])]
+      : (args as any[]);
     const response = await procedure(...allArgs);
     return response.error
       ? NextResponse.json(response, {
