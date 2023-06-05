@@ -1,4 +1,4 @@
-import { create, createProtected } from "../src/server";
+import { combine, create, createProtected } from "../src/server";
 
 const createServerF1 = () => {
   let count: number = 0;
@@ -51,7 +51,7 @@ const createServerF2 = () => {
       getStringF2: () => {
         return "foo";
       },
-      getString2F2: (number: number) => {
+      getString2F2: async (number: number) => {
         return { answer: 2 * number + "foo" };
       },
       getString3F2: (foo: string, numbers: { a: number; b: number }) => {
@@ -62,7 +62,7 @@ const createServerF2 = () => {
       },
     },
     mutations: {
-      incrementF2: (amount: number) => {
+      incrementF2: async (amount: number) => {
         count += amount;
       },
       resetF2: () => {
@@ -122,11 +122,11 @@ const createServerF3 = () => {
   counterF3.contextCalls = 0;
   counterF3.middlewareCalls = 0;
   return createProtected({
-    getContext: () => {
+    getContext: async () => {
       counterF3.contextCalls++;
       return { additional: 30 };
     },
-    middleware: (options, next) => {
+    middleware: async (options, next) => {
       counterF3.middlewareCalls++;
       return next();
     },
@@ -134,7 +134,7 @@ const createServerF3 = () => {
       getStringF3: (ctx) => {
         return "foo" + ctx.additional;
       },
-      getString2F3: (ctx, number: number) => {
+      getString2F3: async (ctx, number: number) => {
         return { answer: 2 * number + "foo" + ctx.additional };
       },
       getString3F3: (ctx, foo: string, numbers: { a: number; b: number }) => {
@@ -143,7 +143,7 @@ const createServerF3 = () => {
       getCountF3: (ctx) => {
         return { count, additional: ctx.additional };
       },
-      getCount2F3: (ctx, factor) => {
+      getCount2F3: async (ctx, factor) => {
         return { count: count * factor, additional: ctx.additional };
       },
     },
@@ -273,9 +273,117 @@ const eventsF4 = {
   ],
 };
 
+const counterF5 = {
+  contextCalls1: 0,
+  middlewareCalls1: 0,
+};
+
+const checkCallsF5 = (withEvents: boolean, batching: boolean) => {
+  let expectedContextCalls: number = 0;
+  let expectedmiddlewareCalls: number = 0;
+  if (!withEvents) {
+    expectedContextCalls = batching ? 1 : 2;
+    expectedmiddlewareCalls = 2;
+  } else {
+    expectedContextCalls = batching ? 3 : 2 * 1 + 6;
+    expectedmiddlewareCalls = 2 * 1 + 6;
+  }
+  expect(counterF5.contextCalls1).toBe(expectedContextCalls);
+  expect(counterF5.middlewareCalls1).toBe(expectedmiddlewareCalls);
+};
+
+const createServerF5 = () => {
+  let protectedCount: number = 0;
+  let count: number = 0;
+  counterF5.contextCalls1 = 0;
+  counterF5.middlewareCalls1 = 0;
+  const protectedApi = createProtected({
+    getContext: () => {
+      counterF5.contextCalls1++;
+      return { additional: 30 };
+    },
+    middleware: (ctx, next) => {
+      counterF5.middlewareCalls1++;
+      return next();
+    },
+    queries: {
+      getStringF5: (ctx) => {
+        return "foo" + ctx.additional;
+      },
+      getString2F5: (ctx, number: number) => {
+        return { answer: 2 * number + "foo" + ctx.additional };
+      },
+      getCountF5: (ctx) => {
+        return { count: protectedCount, additional: ctx.additional };
+      },
+    },
+    mutations: {
+      incrementF5: (ctx, amount: number) => {
+        protectedCount += amount;
+      },
+      resetF5: (ctx) => {
+        protectedCount = 0;
+      },
+    },
+  });
+  const api = create({
+    queries: {
+      getNumberF5: () => {
+        return 72;
+      },
+      getNumber2F5: (number: number) => {
+        return 2 * number;
+      },
+      getCount2F5: () => {
+        return count;
+      },
+    },
+    mutations: {
+      increment2F5: (amount: number) => {
+        count += amount;
+      },
+      reset2F5: () => {
+        count = 0;
+      },
+    },
+  });
+  return combine(api, protectedApi);
+};
+
+const queriesF5 = [
+  { method: "getStringF5", args: [], expected: "foo30" },
+  { method: "getNumberF5", args: [], expected: 72 },
+  { method: "getString2F5", args: [9], expected: { answer: "18foo30" } },
+  { method: "getNumber2F5", args: [18], expected: 36 },
+];
+
+const eventsF5 = {
+  mutations: [
+    { method: "reset2F5", args: [[]] },
+    { method: "resetF5", args: [[]] },
+    { method: "increment2F5", args: [[15], [12]] },
+    { method: "incrementF5", args: [[10], [5], [4], [16], [7]] },
+  ],
+  queries: [
+    {
+      method: "getCountF5",
+      args: [],
+      expected: { count: 42, additional: 30 },
+      initialExpected: { count: 0, additional: 30 },
+    },
+    {
+      method: "getCount2F5",
+      args: [],
+      expected: 27,
+      initialExpected: 0,
+    },
+  ],
+};
+
 export const fixtures: [any, any, any, any][] = [
   [createServerF1, queriesF1, eventsF1, null],
   [createServerF2, queriesF2, eventsF2, null],
   [createServerF3, queriesF3, eventsF3, checkCallsF3],
   [createServerF4, queriesF4, eventsF4, checkCallsF4],
+  [createServerF5, queriesF5, eventsF5, checkCallsF5],
 ];

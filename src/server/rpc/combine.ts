@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connector } from "./types";
+import { BatchInputArguments } from "../../types";
+import { RPCResponse } from "../../types";
+import { getStatus } from "./connector";
+import { errorResponse } from "./rpcResponse";
 
 type QandMBaseType = { [key: string]: (...args: any[]) => any };
 type ServerApiType<Q extends QandMBaseType, M extends QandMBaseType> = Q &
@@ -90,13 +94,27 @@ export function combine(...apis: any[]) {
         params: { method: string };
       }
     ): Promise<Response> => {
-      const method = params.params.method;
-      for (const api of apis) {
-        if (api[0].queries[method]) {
-          return api[1].GET(request, params);
+      if (!request.nextUrl.searchParams.get("batch")) {
+        const method = params.params.method;
+        for (const api of apis) {
+          if (api[0].queries[method]) {
+            return api[1].GET(request, params);
+          }
         }
+        const response: RPCResponse = errorResponse.NOT_FOUND(
+          `query ${method} not found`
+        );
+        return NextResponse.json(response, {
+          status: response.error!.json.data.httpStatus,
+        });
+      } else {
+        const input = request.nextUrl.searchParams.get("input");
+        const args: BatchInputArguments = JSON.parse(
+          decodeURIComponent(input!)
+        );
+        const methods: string[] = params.params.method.split(",");
+        return batchResult(request, methods, apis, args, true);
       }
-      return NextResponse.json({ message: "Query not found" }, { status: 404 });
     },
     POST: async (
       request: NextRequest,
@@ -104,16 +122,24 @@ export function combine(...apis: any[]) {
         params: { method: string };
       }
     ): Promise<Response> => {
-      const method = params.params.method;
-      for (const api of apis) {
-        if (api[0].mutations[method]) {
-          return api[1].POST(request, params);
+      if (!request.nextUrl.searchParams.get("batch")) {
+        const method = params.params.method;
+        for (const api of apis) {
+          if (api[0].mutations[method]) {
+            return api[1].POST(request, params);
+          }
         }
+        const response: RPCResponse = errorResponse.NOT_FOUND(
+          `query ${method} not found`
+        );
+        return NextResponse.json(response, {
+          status: response.error!.json.data.httpStatus,
+        });
+      } else {
+        const args: BatchInputArguments = await request.json();
+        const methods: string[] = params.params.method.split(",");
+        return batchResult(request, methods, apis, args, false);
       }
-      return NextResponse.json(
-        { message: "Mutation not found" },
-        { status: 404 }
-      );
     },
   };
   return [serverApi, connector];
@@ -147,4 +173,72 @@ function verifyUniqueMethodNames(
       names.add(method);
     }
   }
+}
+
+async function batchResult(
+  request: Request,
+  methods: string[],
+  apis: any[],
+  args: BatchInputArguments,
+  get: boolean
+): Promise<Response> {
+  const allocations: {
+    apiIndex: number;
+    methodIndex: number[];
+    args: BatchInputArguments;
+    method: string;
+  }[] = [];
+  for (let methodIndex = 0; methodIndex < methods.length; methodIndex++) {
+    let found: boolean = false;
+    for (let apiIndex = 0; apiIndex < apis.length; apiIndex++) {
+      if (
+        apis[apiIndex][0][get ? "queries" : "mutations"][methods[methodIndex]]
+      ) {
+        found = true;
+        const allocation = allocations.find((a) => a.apiIndex === apiIndex);
+        if (allocation) {
+          allocation.methodIndex.push(methodIndex);
+          allocation.args[allocation.methodIndex.length - 1] =
+            args[methodIndex];
+          allocation.method += "," + methods[methodIndex];
+        } else {
+          allocations.push({
+            apiIndex,
+            methodIndex: [methodIndex],
+            args: { 0: args[methodIndex] },
+            method: methods[methodIndex],
+          });
+        }
+      }
+    }
+    // TODO: refactor
+    if (!found) {
+      return NextResponse.json({ message: "Query not found" }, { status: 404 });
+    }
+  }
+  const responses: { [key: number]: RPCResponse } = {};
+  for (const allocation of allocations) {
+    const allocationResponses: RPCResponse[] = JSON.parse(
+      await apis[allocation.apiIndex][1][get ? "GET" : "POST"](
+        request,
+        {
+          params: {
+            method: allocation.method,
+          },
+        },
+        allocation.args
+      )
+    );
+    for (let i = 0; i < allocationResponses.length; i++) {
+      responses[allocation.methodIndex[i]] = allocationResponses[i];
+    }
+  }
+  const rpcResponses: RPCResponse[] = [];
+  for (let i = 0; i < methods.length; i++) {
+    rpcResponses.push(responses[i]);
+  }
+  const status = getStatus(rpcResponses);
+  return status === 200
+    ? NextResponse.json(rpcResponses)
+    : NextResponse.json(rpcResponses, { status });
 }

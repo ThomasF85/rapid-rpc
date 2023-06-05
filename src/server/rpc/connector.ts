@@ -22,16 +22,20 @@ export function getConnector<
       request: NextRequest,
       params: {
         params: { method: string };
-      }
+      },
+      batchArgs?: BatchInputArguments
     ): Promise<Response> => {
-      const input = request.nextUrl.searchParams.get("input");
-      const args: any[] | BatchInputArguments = input
-        ? JSON.parse(decodeURIComponent(input))
-        : [];
+      let args: any[] | BatchInputArguments = [];
+      if (batchArgs) {
+        args = batchArgs;
+      } else {
+        const input = request.nextUrl.searchParams.get("input");
+        args = input ? JSON.parse(decodeURIComponent(input)) : [];
+      }
       return await createResponse(
         "query",
         params.params.method,
-        !!request.nextUrl.searchParams.get("batch"),
+        !!batchArgs || !!request.nextUrl.searchParams.get("batch"),
         args,
         internalConnector._get,
         getContext
@@ -41,13 +45,19 @@ export function getConnector<
       request: NextRequest,
       params: {
         params: { method: string };
-      }
+      },
+      batchArgs?: BatchInputArguments
     ): Promise<Response> => {
-      const args: any[] | BatchInputArguments = await request.json();
+      let args: any[] | BatchInputArguments = [];
+      if (batchArgs) {
+        args = batchArgs;
+      } else {
+        args = await request.json();
+      }
       return await createResponse(
         "mutation",
         params.params.method,
-        !!request.nextUrl.searchParams.get("batch"),
+        !!batchArgs || !!request.nextUrl.searchParams.get("batch"),
         args,
         internalConnector._post,
         getContext
@@ -137,7 +147,7 @@ async function createResponse(
   }
 }
 
-function getStatus(responses: RPCResponse[]): number {
+export function getStatus(responses: RPCResponse[]): number {
   const status: number = responses[0].result
     ? 200
     : responses[0].error!.json.data.httpStatus;
