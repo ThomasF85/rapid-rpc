@@ -14,7 +14,7 @@ test.each(fixtures)(
 
     await waitFor(() => {
       queries.forEach((q, index) => {
-        expect(result.current[index].data).toBe(q.expected);
+        expect(result.current[index].data).toStrictEqual(q.expected);
       });
     });
   }
@@ -37,7 +37,7 @@ test.each(fixtures)(
 
     await waitFor(() => {
       events.queries.forEach((q, index) => {
-        expect(result.current[index].data).toBe(q.initialExpected);
+        expect(result.current[index].data).toStrictEqual(q.initialExpected);
       });
     });
 
@@ -56,7 +56,7 @@ test.each(fixtures)(
 
     await waitFor(() => {
       events.queries.forEach((q, index) => {
-        expect(result.current[index].data).toBe(q.expected);
+        expect(result.current[index].data).toStrictEqual(q.expected);
       });
     });
   }

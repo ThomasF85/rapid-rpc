@@ -9,12 +9,8 @@ test.each(fixtures)(
   (apiOptions, queries, events) => {
     const [serverApi] = create(apiOptions());
     queries.forEach((q) => {
-      expect(serverApi[q.method](...q.args)).toBe(q.expected);
+      expect(serverApi[q.method](...q.args)).toStrictEqual(q.expected);
     });
-
-    expect(serverApi.get42()).toBe(42);
-    expect(serverApi.getDouble(6)).toBe(12);
-    expect(serverApi.getSum(3, { a: 6, b: 9 })).toBe(18);
   }
 );
 
@@ -28,7 +24,7 @@ test.each(fixtures)(
       }
     }
     events.queries.forEach((q) => {
-      expect(serverApi[q.method](...q.args)).toBe(q.expected);
+      expect(serverApi[q.method](...q.args)).toStrictEqual(q.expected);
     });
   }
 );
@@ -44,7 +40,7 @@ test.each(fixtures)(
 
     await waitFor(() => {
       queries.forEach((q, index) => {
-        expect(result.current[index].data).toBe(q.expected);
+        expect(result.current[index].data).toStrictEqual(q.expected);
       });
     });
   }
@@ -67,7 +63,7 @@ test.each(fixtures)(
 
     await waitFor(() => {
       events.queries.forEach((q, index) => {
-        expect(result.current[index].data).toBe(q.initialExpected);
+        expect(result.current[index].data).toStrictEqual(q.initialExpected);
       });
     });
 
@@ -86,7 +82,7 @@ test.each(fixtures)(
 
     await waitFor(() => {
       events.queries.forEach((q, index) => {
-        expect(result.current[index].data).toBe(q.expected);
+        expect(result.current[index].data).toStrictEqual(q.expected);
       });
     });
   }
