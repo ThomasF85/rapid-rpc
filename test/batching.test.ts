@@ -5,8 +5,8 @@ import { fixtures } from "./fixtures";
 
 test.each(fixtures)(
   "client api queries work with batching",
-  async (apiOptions, queries, events) => {
-    const api = setUpClientApi(apiOptions, true);
+  async (createServer, queries, events, checkCalls) => {
+    const api = setUpClientApi(createServer, true);
     function useQueries() {
       return queries.map((q) => api[q.method].useQuery(...q.args));
     }
@@ -17,13 +17,16 @@ test.each(fixtures)(
         expect(result.current[index].data).toStrictEqual(q.expected);
       });
     });
+    if (checkCalls) {
+      checkCalls(false, true);
+    }
   }
 );
 
 test.each(fixtures)(
   "client api mutations work with batching",
-  async (apiOptions, queries, events) => {
-    const api = setUpClientApi(apiOptions, true);
+  async (createServer, queries, events, checkCalls) => {
+    const api = setUpClientApi(createServer, true);
     function useQueries() {
       return events.queries.map((q) => api[q.method].useQuery(...q.args));
     }
@@ -41,23 +44,33 @@ test.each(fixtures)(
       });
     });
 
-    for (let i = 0; i < events.mutations.length; i++) {
-      for (const args of events.mutations[i].args) {
-        await act(async () => {
+    await act(async () => {
+      let promises: any[] = [];
+      for (let i = 0; i < events.mutations.length; i++) {
+        for (const args of events.mutations[i].args) {
           //@ts-ignore
-          await mutationResult.current[i].mutate(...args);
-        });
+          promises.push(mutationResult.current[i].mutate(...args));
+        }
       }
-    }
+      await Promise.all(promises);
+    });
 
-    for (const q of result.current) {
-      await act(async () => await q.mutate());
-    }
+    await act(async () => {
+      let promises: any[] = [];
+      for (const q of result.current) {
+        promises.push(q.mutate());
+      }
+      await Promise.all(promises);
+    });
 
     await waitFor(() => {
       events.queries.forEach((q, index) => {
         expect(result.current[index].data).toStrictEqual(q.expected);
       });
     });
+
+    if (checkCalls) {
+      checkCalls(true, true);
+    }
   }
 );

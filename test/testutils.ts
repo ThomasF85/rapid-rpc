@@ -39,8 +39,8 @@ export function mockFetch(connector: Connector) {
   });
 }
 
-export function setUpClientApi(apiOptions, batching) {
-  const [serverApi, connector] = create(apiOptions());
+export function setUpClientApi(createServer, batching) {
+  const [serverApi, connector] = createServer();
   mockFetch(connector);
   type API = typeof serverApi;
   return createClient<API>("test", {

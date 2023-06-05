@@ -70,18 +70,18 @@ export function createProtected<
     for (const query in queries) {
       queriesWithContext[query] = async (...args: any[]) => {
         const ctx = await getContext();
-        await middleware(
+        return await middleware(
           { ctx, args, method: query, methodType: "query" },
-          () => queries[query](ctx, ...args)
+          async () => await queries[query](ctx, ...args)
         );
       };
     }
     for (const mutation in mutations) {
       mutationsWithContext[mutation] = async (...args: any[]) => {
         const ctx = await getContext();
-        await middleware(
+        return await middleware(
           { ctx, args, method: mutation, methodType: "mutation" },
-          () => mutations[mutation](ctx, ...args)
+          async () => await mutations[mutation](ctx, ...args)
         );
       };
     }
