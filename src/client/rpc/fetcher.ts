@@ -6,7 +6,7 @@ export const getFetcher = (basePath: string) => {
     const [path, args] = procedureCall;
     const url =
       args.length === 0
-        ? path
+        ? `${basePath}${path}`
         : `${basePath}${path}?input=${encodeArguments(args)}`;
     return mapResponse(await fetch(url));
   };

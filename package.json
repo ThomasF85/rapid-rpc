@@ -27,7 +27,9 @@
     "build:server": "parcel build src/server/index.ts",
     "build:client": "parcel build src/client/index.ts",
     "clean": "rm -rf esm && rm index.* client.*",
-    "prettier:write": "npx prettier --write src/"
+    "prettier:write": "npx prettier --write src/",
+    "test": "jest",
+    "test:watch": "jest --watchAll"
   },
   "repository": {
     "type": "git",
@@ -45,7 +47,13 @@
   "devDependencies": {
     "@parcel/packager-ts": "^2.9.1",
     "@parcel/transformer-typescript-types": "^2.9.1",
+    "@testing-library/react": "^14.0.0",
+    "@types/jest": "^29.5.2",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "jest-fetch-mock": "^3.0.3",
     "parcel": "^2.9.1",
+    "ts-jest": "^29.1.0",
     "typescript": "^5.0.4"
   },
   "peerDependencies": {
