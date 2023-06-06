@@ -1,4 +1,25 @@
 import { combine, create, createProtected } from "../src/server";
+import { Connector } from "../src/server/rpc/types";
+
+export interface Fixture {
+  createServer: () => [any, Connector];
+  queries: { method: string; args: any[]; expected: any }[];
+  events: {
+    mutations: { method: string; args: any[][] }[];
+    queries: {
+      method: string;
+      args: any[];
+      expected: any;
+      initialExpected: any;
+    }[];
+  };
+  hasContext: boolean;
+  hasMiddleware: boolean;
+  expectedContextCalls?: (events: boolean, batching: boolean) => number;
+  expectedMiddlewareCalls?: (events: boolean, batching: boolean) => number;
+  getNumberOfContextCalls?: () => number;
+  getNumberOfMiddlewareCalls?: () => number;
+}
 
 const createServerF1 = () => {
   let count: number = 0;
@@ -42,6 +63,14 @@ const eventsF1 = {
   queries: [
     { method: "getCountF1", args: [], expected: 39, initialExpected: 0 },
   ],
+};
+
+const fixture1: Fixture = {
+  createServer: createServerF1,
+  queries: queriesF1,
+  events: eventsF1,
+  hasContext: false,
+  hasMiddleware: false,
 };
 
 const createServerF2 = () => {
@@ -93,28 +122,17 @@ const eventsF2 = {
   ],
 };
 
+const fixture2: Fixture = {
+  createServer: createServerF2,
+  queries: queriesF2,
+  events: eventsF2,
+  hasContext: false,
+  hasMiddleware: false,
+};
+
 const counterF3 = {
   contextCalls: 0,
   middlewareCalls: 0,
-};
-
-const checkCallsF3 = (withEvents: boolean, batching: boolean) => {
-  let expectedContextCalls: number = 0;
-  let expectedmiddlewareCalls: number = 0;
-  if (!withEvents) {
-    expectedContextCalls = batching ? 1 : queriesF3.length;
-    expectedmiddlewareCalls = queriesF3.length;
-  } else {
-    expectedContextCalls = batching
-      ? 3
-      : 2 * eventsF3.queries.length +
-        eventsF3.mutations.flatMap((m) => m.args).length;
-    expectedmiddlewareCalls =
-      2 * eventsF3.queries.length +
-      eventsF3.mutations.flatMap((m) => m.args).length;
-  }
-  expect(counterF3.contextCalls).toBe(expectedContextCalls);
-  expect(counterF3.middlewareCalls).toBe(expectedmiddlewareCalls);
 };
 
 const createServerF3 = () => {
@@ -189,21 +207,38 @@ const eventsF3 = {
   ],
 };
 
-const counterF4 = {
-  contextCalls: 0,
+const fixture3: Fixture = {
+  createServer: createServerF3,
+  queries: queriesF3,
+  events: eventsF3,
+  hasContext: true,
+  hasMiddleware: true,
+  expectedContextCalls: (events: boolean, batching: boolean) => {
+    if (!events) {
+      return batching ? 1 : queriesF3.length;
+    } else {
+      return batching
+        ? 3
+        : 2 * eventsF3.queries.length +
+            eventsF3.mutations.flatMap((m) => m.args).length;
+    }
+  },
+  expectedMiddlewareCalls: (events: boolean, batching: boolean) => {
+    if (!events) {
+      return queriesF3.length;
+    } else {
+      return (
+        2 * eventsF3.queries.length +
+        eventsF3.mutations.flatMap((m) => m.args).length
+      );
+    }
+  },
+  getNumberOfContextCalls: () => counterF3.contextCalls,
+  getNumberOfMiddlewareCalls: () => counterF3.middlewareCalls,
 };
 
-const checkCallsF4 = (withEvents: boolean, batching: boolean) => {
-  let expectedContextCalls: number = 0;
-  if (!withEvents) {
-    expectedContextCalls = batching ? 1 : queriesF4.length;
-  } else {
-    expectedContextCalls = batching
-      ? 3
-      : 2 * eventsF4.queries.length +
-        eventsF4.mutations.flatMap((m) => m.args).length;
-  }
-  expect(counterF4.contextCalls).toBe(expectedContextCalls);
+const counterF4 = {
+  contextCalls: 0,
 };
 
 const createServerF4 = () => {
@@ -273,37 +308,42 @@ const eventsF4 = {
   ],
 };
 
-const counterF5 = {
-  contextCalls1: 0,
-  middlewareCalls1: 0,
+const fixture4: Fixture = {
+  createServer: createServerF4,
+  queries: queriesF4,
+  events: eventsF4,
+  hasContext: true,
+  hasMiddleware: false,
+  expectedContextCalls: (events: boolean, batching: boolean) => {
+    if (!events) {
+      return batching ? 1 : queriesF4.length;
+    } else {
+      return batching
+        ? 3
+        : 2 * eventsF4.queries.length +
+            eventsF4.mutations.flatMap((m) => m.args).length;
+    }
+  },
+  getNumberOfContextCalls: () => counterF4.contextCalls,
 };
 
-const checkCallsF5 = (withEvents: boolean, batching: boolean) => {
-  let expectedContextCalls: number = 0;
-  let expectedmiddlewareCalls: number = 0;
-  if (!withEvents) {
-    expectedContextCalls = batching ? 1 : 2;
-    expectedmiddlewareCalls = 2;
-  } else {
-    expectedContextCalls = batching ? 3 : 2 * 1 + 6;
-    expectedmiddlewareCalls = 2 * 1 + 6;
-  }
-  expect(counterF5.contextCalls1).toBe(expectedContextCalls);
-  expect(counterF5.middlewareCalls1).toBe(expectedmiddlewareCalls);
+const counterF5 = {
+  contextCalls: 0,
+  middlewareCalls: 0,
 };
 
 const createServerF5 = () => {
   let protectedCount: number = 0;
   let count: number = 0;
-  counterF5.contextCalls1 = 0;
-  counterF5.middlewareCalls1 = 0;
+  counterF5.contextCalls = 0;
+  counterF5.middlewareCalls = 0;
   const protectedApi = createProtected({
     getContext: () => {
-      counterF5.contextCalls1++;
+      counterF5.contextCalls++;
       return { additional: 30 };
     },
     middleware: (ctx, next) => {
-      counterF5.middlewareCalls1++;
+      counterF5.middlewareCalls++;
       return next();
     },
     queries: {
@@ -380,10 +420,34 @@ const eventsF5 = {
   ],
 };
 
-export const fixtures: [any, any, any, any][] = [
-  [createServerF1, queriesF1, eventsF1, null],
-  [createServerF2, queriesF2, eventsF2, null],
-  [createServerF3, queriesF3, eventsF3, checkCallsF3],
-  [createServerF4, queriesF4, eventsF4, checkCallsF4],
-  [createServerF5, queriesF5, eventsF5, checkCallsF5],
+const fixture5: Fixture = {
+  createServer: createServerF5,
+  queries: queriesF5,
+  events: eventsF5,
+  hasContext: true,
+  hasMiddleware: true,
+  expectedContextCalls: (events: boolean, batching: boolean) => {
+    if (!events) {
+      return batching ? 1 : 2;
+    } else {
+      return batching ? 3 : 2 * 1 + 6;
+    }
+  },
+  expectedMiddlewareCalls: (events: boolean, batching: boolean) => {
+    if (!events) {
+      return 2;
+    } else {
+      return 2 * 1 + 6;
+    }
+  },
+  getNumberOfContextCalls: () => counterF5.contextCalls,
+  getNumberOfMiddlewareCalls: () => counterF5.middlewareCalls,
+};
+
+export const fixtures: Fixture[] = [
+  fixture1,
+  fixture2,
+  fixture3,
+  fixture4,
+  fixture5,
 ];
