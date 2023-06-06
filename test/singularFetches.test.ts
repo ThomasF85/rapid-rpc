@@ -37,12 +37,12 @@ test.each(fixtures)("client api queries work", async (fixture: Fixture) => {
   });
   if (fixture.hasContext) {
     expect(fixture.getNumberOfContextCalls!()).toBe(
-      fixture.expectedContextCalls!(false, false)
+      fixture.expectedContextCalls!(false, 1, 0, 0)
     );
   }
   if (fixture.hasMiddleware) {
     expect(fixture.getNumberOfMiddlewareCalls!()).toBe(
-      fixture.expectedMiddlewareCalls!(false, false)
+      fixture.expectedMiddlewareCalls!(1, 0, 0)
     );
   }
 });
@@ -93,12 +93,12 @@ test.each(fixtures)("client api mutations work", async (fixture: Fixture) => {
 
   if (fixture.hasContext) {
     expect(fixture.getNumberOfContextCalls!()).toBe(
-      fixture.expectedContextCalls!(true, false)
+      fixture.expectedContextCalls!(false, 0, 2, 1)
     );
   }
   if (fixture.hasMiddleware) {
     expect(fixture.getNumberOfMiddlewareCalls!()).toBe(
-      fixture.expectedMiddlewareCalls!(true, false)
+      fixture.expectedMiddlewareCalls!(0, 2, 1)
     );
   }
 });

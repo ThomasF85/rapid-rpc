@@ -19,12 +19,12 @@ test.each(fixtures)(
     });
     if (fixture.hasContext) {
       expect(fixture.getNumberOfContextCalls!()).toBe(
-        fixture.expectedContextCalls!(false, true)
+        fixture.expectedContextCalls!(true, 1, 0, 0)
       );
     }
     if (fixture.hasMiddleware) {
       expect(fixture.getNumberOfMiddlewareCalls!()).toBe(
-        fixture.expectedMiddlewareCalls!(false, true)
+        fixture.expectedMiddlewareCalls!(1, 0, 0)
       );
     }
   }
@@ -80,12 +80,12 @@ test.each(fixtures)(
 
     if (fixture.hasContext) {
       expect(fixture.getNumberOfContextCalls!()).toBe(
-        fixture.expectedContextCalls!(true, true)
+        fixture.expectedContextCalls!(true, 0, 2, 1)
       );
     }
     if (fixture.hasMiddleware) {
       expect(fixture.getNumberOfMiddlewareCalls!()).toBe(
-        fixture.expectedMiddlewareCalls!(true, true)
+        fixture.expectedMiddlewareCalls!(0, 2, 1)
       );
     }
   }

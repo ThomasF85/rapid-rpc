@@ -15,10 +15,54 @@ export interface Fixture {
   };
   hasContext: boolean;
   hasMiddleware: boolean;
-  expectedContextCalls?: (events: boolean, batching: boolean) => number;
-  expectedMiddlewareCalls?: (events: boolean, batching: boolean) => number;
+  expectedContextCalls?: (
+    batching: boolean,
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => number;
+  expectedMiddlewareCalls?: (
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => number;
   getNumberOfContextCalls?: () => number;
   getNumberOfMiddlewareCalls?: () => number;
+}
+
+function getExpectedContextCalls(queries, events) {
+  return (
+    batching: boolean,
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => {
+    let contextCalls = 0;
+    contextCalls += queriesCalled * (batching ? 1 : queries.length);
+    if (batching) {
+      contextCalls += eventQueriesCalled + eventMutationsCalled;
+    } else {
+      contextCalls +=
+        eventQueriesCalled * events.queries.length +
+        eventMutationsCalled * events.mutations.flatMap((m) => m.args).length;
+    }
+    return contextCalls;
+  };
+}
+
+function getExpectedMiddlewareCalls(queries, events) {
+  return (
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => {
+    let contextCalls = 0;
+    contextCalls += queriesCalled * queries.length;
+    contextCalls +=
+      eventQueriesCalled * events.queries.length +
+      eventMutationsCalled * events.mutations.flatMap((m) => m.args).length;
+    return contextCalls;
+  };
 }
 
 const createServerF1 = () => {
@@ -213,26 +257,8 @@ const fixture3: Fixture = {
   events: eventsF3,
   hasContext: true,
   hasMiddleware: true,
-  expectedContextCalls: (events: boolean, batching: boolean) => {
-    if (!events) {
-      return batching ? 1 : queriesF3.length;
-    } else {
-      return batching
-        ? 3
-        : 2 * eventsF3.queries.length +
-            eventsF3.mutations.flatMap((m) => m.args).length;
-    }
-  },
-  expectedMiddlewareCalls: (events: boolean, batching: boolean) => {
-    if (!events) {
-      return queriesF3.length;
-    } else {
-      return (
-        2 * eventsF3.queries.length +
-        eventsF3.mutations.flatMap((m) => m.args).length
-      );
-    }
-  },
+  expectedContextCalls: getExpectedContextCalls(queriesF3, eventsF3),
+  expectedMiddlewareCalls: getExpectedMiddlewareCalls(queriesF3, eventsF3),
   getNumberOfContextCalls: () => counterF3.contextCalls,
   getNumberOfMiddlewareCalls: () => counterF3.middlewareCalls,
 };
@@ -314,16 +340,7 @@ const fixture4: Fixture = {
   events: eventsF4,
   hasContext: true,
   hasMiddleware: false,
-  expectedContextCalls: (events: boolean, batching: boolean) => {
-    if (!events) {
-      return batching ? 1 : queriesF4.length;
-    } else {
-      return batching
-        ? 3
-        : 2 * eventsF4.queries.length +
-            eventsF4.mutations.flatMap((m) => m.args).length;
-    }
-  },
+  expectedContextCalls: getExpectedContextCalls(queriesF4, eventsF4),
   getNumberOfContextCalls: () => counterF4.contextCalls,
 };
 
@@ -426,19 +443,30 @@ const fixture5: Fixture = {
   events: eventsF5,
   hasContext: true,
   hasMiddleware: true,
-  expectedContextCalls: (events: boolean, batching: boolean) => {
-    if (!events) {
-      return batching ? 1 : 2;
+  expectedContextCalls: (
+    batching: boolean,
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => {
+    let contextCalls = 0;
+    contextCalls += queriesCalled * (batching ? 1 : 2);
+    if (batching) {
+      contextCalls += eventQueriesCalled + eventMutationsCalled;
     } else {
-      return batching ? 3 : 2 * 1 + 6;
+      contextCalls += eventQueriesCalled + eventMutationsCalled * 6;
     }
+    return contextCalls;
   },
-  expectedMiddlewareCalls: (events: boolean, batching: boolean) => {
-    if (!events) {
-      return 2;
-    } else {
-      return 2 * 1 + 6;
-    }
+  expectedMiddlewareCalls: (
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => {
+    let middlewareCalls = 0;
+    middlewareCalls += queriesCalled * 2;
+    middlewareCalls += eventQueriesCalled + eventMutationsCalled * 6;
+    return middlewareCalls;
   },
   getNumberOfContextCalls: () => counterF5.contextCalls,
   getNumberOfMiddlewareCalls: () => counterF5.middlewareCalls,
