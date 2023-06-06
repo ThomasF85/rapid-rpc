@@ -472,10 +472,168 @@ const fixture5: Fixture = {
   getNumberOfMiddlewareCalls: () => counterF5.middlewareCalls,
 };
 
+const counterF6 = {
+  contextCalls: 0,
+  middlewareCalls: 0,
+};
+
+const createServerF6 = () => {
+  let protectedCount: number = 0;
+  let count: number = 0;
+  counterF6.contextCalls = 0;
+  counterF6.middlewareCalls = 0;
+  const protectedApi = createProtected({
+    getContext: () => {
+      counterF6.contextCalls++;
+      return { additional: 30 };
+    },
+    middleware: (ctx, next) => {
+      counterF6.middlewareCalls++;
+      return next();
+    },
+    queries: {
+      getStringF6: (ctx) => {
+        return "foo" + ctx.additional;
+      },
+      getString2F6: (ctx, number: number) => {
+        return { answer: 2 * number + "foo" + ctx.additional };
+      },
+      getCountF6: (ctx) => {
+        return { count: protectedCount, additional: ctx.additional };
+      },
+    },
+    mutations: {
+      incrementF6: (ctx, amount: number) => {
+        protectedCount += amount;
+      },
+      resetF6: (ctx) => {
+        protectedCount = 0;
+      },
+    },
+  });
+  const protectedApi2 = createProtected({
+    getContext: () => {
+      counterF6.contextCalls++;
+      return { additional: 30 };
+    },
+    queries: {
+      getNumberF6: (ctx) => {
+        return 72;
+      },
+      getNumber2F6: (ctx, number: number) => {
+        return 2 * number;
+      },
+      getCount2F6: (ctx) => {
+        return count;
+      },
+    },
+    mutations: {
+      increment2F6: (ctx, amount: number) => {
+        count += amount;
+      },
+      reset2F6: (ctx) => {
+        count = 0;
+      },
+    },
+  });
+  const api = create({
+    queries: {
+      getBooleanF6: () => {
+        return false;
+      },
+      getBoolean2F6: (input: string) => {
+        return { a: true, b: input };
+      },
+    },
+    mutations: {},
+  });
+  return combine(protectedApi2, protectedApi, api);
+};
+
+const queriesF6 = [
+  { method: "getStringF6", args: [], expected: "foo30" },
+  { method: "getNumberF6", args: [], expected: 72 },
+  { method: "getString2F6", args: [9], expected: { answer: "18foo30" } },
+  { method: "getNumber2F6", args: [18], expected: 36 },
+  { method: "getBooleanF6", args: [], expected: false },
+  { method: "getBoolean2F6", args: ["baz"], expected: { a: true, b: "baz" } },
+];
+
+const eventsF6 = {
+  mutations: [
+    { method: "reset2F6", args: [[]] },
+    { method: "resetF6", args: [[]] },
+    { method: "increment2F6", args: [[15], [12]] },
+    { method: "incrementF6", args: [[10], [5], [4], [16], [7]] },
+  ],
+  queries: [
+    {
+      method: "getCountF6",
+      args: [],
+      expected: { count: 42, additional: 30 },
+      initialExpected: { count: 0, additional: 30 },
+    },
+    {
+      method: "getCount2F6",
+      args: [],
+      expected: 27,
+      initialExpected: 0,
+    },
+    {
+      method: "getBooleanF6",
+      args: [],
+      expected: false,
+      initialExpected: false,
+    },
+    {
+      method: "getBoolean2F6",
+      args: ["nba"],
+      expected: { a: true, b: "nba" },
+      initialExpected: { a: true, b: "nba" },
+    },
+  ],
+};
+
+const fixture6: Fixture = {
+  createServer: createServerF6,
+  queries: queriesF6,
+  events: eventsF6,
+  hasContext: true,
+  hasMiddleware: true,
+  expectedContextCalls: (
+    batching: boolean,
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => {
+    let contextCalls = 0;
+    contextCalls += queriesCalled * (batching ? 2 : 4);
+    if (batching) {
+      contextCalls += 2 * eventQueriesCalled + 2 * eventMutationsCalled;
+    } else {
+      contextCalls += 2 * eventQueriesCalled + eventMutationsCalled * 9;
+    }
+    return contextCalls;
+  },
+  expectedMiddlewareCalls: (
+    queriesCalled: number,
+    eventQueriesCalled: number,
+    eventMutationsCalled: number
+  ) => {
+    let middlewareCalls = 0;
+    middlewareCalls += queriesCalled * 2;
+    middlewareCalls += eventQueriesCalled + eventMutationsCalled * 6;
+    return middlewareCalls;
+  },
+  getNumberOfContextCalls: () => counterF6.contextCalls,
+  getNumberOfMiddlewareCalls: () => counterF6.middlewareCalls,
+};
+
 export const fixtures: Fixture[] = [
   fixture1,
   fixture2,
   fixture3,
   fixture4,
   fixture5,
+  fixture6,
 ];
