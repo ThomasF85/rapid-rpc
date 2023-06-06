@@ -1,8 +1,6 @@
 "use client";
 
-import { ClientApiType, createClient } from "../../src/client";
+import { createClient } from "rapid-rpc/client";
 import { API } from "./server";
 
-export const api: ClientApiType<API> = createClient<API>(
-  "http://localhost:3000/api"
-);
+export const api = createClient<API>("http://localhost:3000/api");

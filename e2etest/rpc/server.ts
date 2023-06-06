@@ -1,5 +1,5 @@
 import "server-only";
-import { create } from "../../src/server/index";
+import { create } from "rapid-rpc";
 
 interface Entry {
   id: string;

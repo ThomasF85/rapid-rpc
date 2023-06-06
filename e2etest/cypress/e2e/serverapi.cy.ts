@@ -1,4 +1,4 @@
-describe("template spec", () => {
+describe("serverapi test", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000");
   });
