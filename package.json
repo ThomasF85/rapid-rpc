@@ -29,7 +29,8 @@
     "clean": "rm -rf esm && rm index.* client.*",
     "prettier:write": "npx prettier --write src/",
     "test": "jest",
-    "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll",
+    "test:e2e": "cd e2etest && npm test"
   },
   "repository": {
     "type": "git",

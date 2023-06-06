@@ -1,6 +1,10 @@
 node_modules
 esm
+videos
+screenshots
 .parcel-cache
+.next
+test-results.xml
 
 /client.*
 /index.*
