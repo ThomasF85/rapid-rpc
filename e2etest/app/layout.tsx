@@ -55,6 +55,19 @@ export default function RootLayout({
                   client page 5
                 </Link>
               </li>
+              <li>
+                <Link href="/client6" data-cy="nav-client6">
+                  client page 6
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/client6-no-batching"
+                  data-cy="nav-client6-no-batching"
+                >
+                  client page 6 no batching
+                </Link>
+              </li>
             </ul>
           </nav>
         </footer>
