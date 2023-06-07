@@ -218,17 +218,16 @@ async function batchResult(
   }
   const responses: { [key: number]: RPCResponse } = {};
   for (const allocation of allocations) {
-    const allocationResponses: RPCResponse[] = JSON.parse(
-      await apis[allocation.apiIndex][1][get ? "GET" : "POST"](
-        request,
-        {
-          params: {
-            method: allocation.method,
-          },
+    const response = await apis[allocation.apiIndex][1][get ? "GET" : "POST"](
+      request,
+      {
+        params: {
+          method: allocation.method,
         },
-        allocation.args
-      )
+      },
+      allocation.args
     );
+    const allocationResponses: RPCResponse[] = await response.json();
     for (let i = 0; i < allocationResponses.length; i++) {
       responses[allocation.methodIndex[i]] = allocationResponses[i];
     }

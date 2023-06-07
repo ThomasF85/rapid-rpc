@@ -4,9 +4,13 @@ describe("client test 1", () => {
   });
 
   it("calls context only once per batch", () => {
-    cy.get('[data-cy="nav-client6"]').click();
+    cy.get('[data-cy="nav-client7"]').click();
     cy.get('[data-cy="client-entry-XYZ"]').should("have.text", "XYZ : false");
+    cy.get('[data-cy="setCount"]').click();
     cy.get('[data-cy="reset"]').click();
+    cy.get('[data-cy="double"]').should("have.text", "Double: 24");
+    cy.get('[data-cy="triple"]').should("have.text", "Triple: 36");
+    cy.get('[data-cy="count"]').should("have.text", "Count: 1337");
     cy.get('[data-cy="client-entry-XYZ"]').should("have.text", "XYZ : false");
     cy.get('[data-cy="client-entry-X1"]').should("have.text", "X1 : false");
     cy.get('[data-cy="client-entry-X2"]').should("have.text", "X2 : true");
@@ -46,9 +50,13 @@ describe("client test 1", () => {
   });
 
   it("calls context on every call without batching", () => {
-    cy.get('[data-cy="nav-client6-no-batching"]').click();
+    cy.get('[data-cy="nav-client7-no-batching"]').click();
     cy.get('[data-cy="client-entry-XYZ"]').should("have.text", "XYZ : false");
+    cy.get('[data-cy="setCount"]').click();
     cy.get('[data-cy="reset"]').click();
+    cy.get('[data-cy="double"]').should("have.text", "Double: 24");
+    cy.get('[data-cy="triple"]').should("have.text", "Triple: 36");
+    cy.get('[data-cy="count"]').should("have.text", "Count: 1337");
     cy.get('[data-cy="client-entry-XYZ"]').should("have.text", "XYZ : false");
     cy.get('[data-cy="client-entry-X1"]').should("have.text", "X1 : false");
     cy.get('[data-cy="client-entry-X2"]').should("have.text", "X2 : true");

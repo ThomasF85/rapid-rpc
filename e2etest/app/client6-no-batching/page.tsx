@@ -86,7 +86,7 @@ export default function Page() {
         context: {calls!.context}, middleware: {calls!.middleware}
       </div>
       <button data-cy="reset" onClick={() => reset()}>
-        add entry
+        reset
       </button>
       <button data-cy="mutation" onClick={() => mutate()}>
         add entry
