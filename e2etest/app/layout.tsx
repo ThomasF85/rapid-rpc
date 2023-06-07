@@ -40,6 +40,21 @@ export default function RootLayout({
                   client page 2
                 </Link>
               </li>
+              <li>
+                <Link href="/client3" data-cy="nav-client3">
+                  client page 3
+                </Link>
+              </li>
+              <li>
+                <Link href="/client4" data-cy="nav-client4">
+                  client page 4
+                </Link>
+              </li>
+              <li>
+                <Link href="/client5" data-cy="nav-client5">
+                  client page 5
+                </Link>
+              </li>
             </ul>
           </nav>
         </footer>
