@@ -31,6 +31,11 @@ export default function RootLayout({
                 </Link>
               </li>
               <li>
+                <Link href="/static7" data-cy="nav-static7">
+                  static page 7
+                </Link>
+              </li>
+              <li>
                 <Link href="/client1" data-cy="nav-client1">
                   client page 1
                 </Link>
