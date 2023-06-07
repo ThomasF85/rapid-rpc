@@ -18,13 +18,7 @@ export const [serverApi, connector] = create({
       return entries;
     },
   },
-  mutations: {
-    addEntry: (label: string, favorite: boolean) => {
-      const entry: Entry = { id: crypto.randomUUID(), label, favorite };
-      entries.push(entry);
-      return entry;
-    },
-  },
+  mutations: {},
 });
 
 export type API = typeof serverApi;

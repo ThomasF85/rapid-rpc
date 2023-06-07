@@ -1,27 +1,43 @@
 "use client";
 
-import { api } from "@/rpc/client";
+import { api } from "@/rpc/1/client";
 
 export default function Page() {
-  const { data: entries, isLoading, error } = api.getEntries.useQuery();
+  const {
+    data: entries1,
+    isLoading: loading1,
+    error: error1,
+  } = api.getEntries.useQuery();
+  const {
+    data: entries2,
+    isLoading: loading2,
+    error: error2,
+  } = api.getEntries.useQueryOptions({});
 
-  if (isLoading) {
+  if (loading1 || loading2) {
     return <div>Loading...</div>;
   }
 
-  if (error) {
+  if (error1 || error2) {
     return <div>An error occurred</div>;
   }
 
   return (
-    <main>
+    <>
       <ul>
-        {entries!.map((entry) => (
+        {entries1!.map((entry) => (
           <li key={entry.id} data-cy={`client1-entry-${entry.label}`}>
             {entry.label} : {entry.favorite.toString()}
           </li>
         ))}
       </ul>
-    </main>
+      <ul>
+        {entries2!.map((entry) => (
+          <li key={entry.id} data-cy={`client1-entry-options-${entry.label}`}>
+            {entry.label} : {entry.favorite.toString()}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
