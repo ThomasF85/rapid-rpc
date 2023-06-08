@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "@/rpc/7/client-no-batching";
+import { api } from "@/rpc/8/client-no-batching";
 
 export default function Page() {
   const {
@@ -28,52 +28,25 @@ export default function Page() {
     mutate: mutateD,
   } = api.getEntry.useQuery(1);
   const {
-    data: calls,
-    isLoading: loadings3,
-    error: errors3,
-    mutate: mutateE,
-  } = api.getCallCounts.useQuery();
-  const {
     data: double,
     isLoading: loadings4,
     error: errors4,
     mutate: mutateF,
   } = api.getDouble.useQuery(12);
   const {
-    data: triple,
+    data: value,
     isLoading: loadings5,
     error: errors5,
     mutate: mutateG,
-  } = api.getTriple.useQuery(12);
-  const {
-    data: count,
-    isLoading: loadings6,
-    error: errors6,
-    mutate: mutateH,
-  } = api.getCount.useQuery();
-  const { mutate: setCount } = api.setCount.useMutation();
+  } = api.getValue.useQuery();
   const { mutate } = api.addEntry.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
       mutateC();
       mutateD();
-      mutateE();
       mutateF();
       mutateG();
-      mutateH();
-    },
-  });
-  const { mutate: reset } = api.resetCallCount.useMutation({
-    onSuccess: () => {
-      mutateA();
-      mutateB();
-      mutateC();
-      mutateD();
-      mutateE();
-      mutateF();
-      mutateG();
-      mutateH();
     },
   });
 
@@ -82,24 +55,13 @@ export default function Page() {
     loading2 ||
     loadings1 ||
     loadings2 ||
-    loadings3 ||
     loadings4 ||
-    loadings5 ||
-    loadings6
+    loadings5
   ) {
     return <div>Loading...</div>;
   }
 
-  if (
-    error1 ||
-    error2 ||
-    errors1 ||
-    errors2 ||
-    errors3 ||
-    errors4 ||
-    errors5 ||
-    errors6
-  ) {
+  if (error1 || error2 || errors1 || errors2 || errors4 || errors5) {
     return <div>An error occurred</div>;
   }
 
@@ -126,26 +88,9 @@ export default function Page() {
         {entry2!.label} : {entry2!.favorite.toString()}
       </div>
       <div data-cy="double">Double: {double}</div>
-      <div data-cy="triple">Triple: {triple}</div>
-      <div data-cy="count">Count: {count}</div>
-      <div data-cy="callcount">
-        context: {calls!.context}, middleware: {calls!.middleware}
-      </div>
-      <button
-        data-cy="reset"
-        onClick={() => {
-          mutate();
-          mutate();
-          mutate();
-        }}
-      >
-        reset
-      </button>
+      <div data-cy="value">Value: {value}</div>
       <button data-cy="mutation" onClick={() => mutate()}>
         add entry
-      </button>
-      <button data-cy="setCount" onClick={() => setCount(1337)}>
-        set Count
       </button>
     </>
   );

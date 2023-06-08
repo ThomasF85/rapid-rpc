@@ -36,6 +36,11 @@ export default function RootLayout({
                 </Link>
               </li>
               <li>
+                <Link href="/static8" data-cy="nav-static8">
+                  static page 8
+                </Link>
+              </li>
+              <li>
                 <Link href="/client1" data-cy="nav-client1">
                   client page 1
                 </Link>
@@ -84,6 +89,19 @@ export default function RootLayout({
                   data-cy="nav-client7-no-batching"
                 >
                   client page 7 no batching
+                </Link>
+              </li>
+              <li>
+                <Link href="/client8" data-cy="nav-client8">
+                  client page 8
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/client8-no-batching"
+                  data-cy="nav-client8-no-batching"
+                >
+                  client page 8 no batching
                 </Link>
               </li>
             </ul>

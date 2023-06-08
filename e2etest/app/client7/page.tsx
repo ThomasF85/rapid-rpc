@@ -134,7 +134,14 @@ export default function Page() {
       <button data-cy="reset" onClick={() => reset()}>
         reset
       </button>
-      <button data-cy="mutation" onClick={() => mutate()}>
+      <button
+        data-cy="mutation"
+        onClick={() => {
+          mutate();
+          mutate();
+          mutate();
+        }}
+      >
         add entry
       </button>
       <button data-cy="setCount" onClick={() => setCount(1337)}>

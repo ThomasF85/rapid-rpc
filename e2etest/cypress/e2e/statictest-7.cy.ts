@@ -3,7 +3,7 @@ describe("static test 1", () => {
     cy.visit("http://localhost:3000");
   });
 
-  it("serverapi works", () => {
+  it("serverapi works with combined api", () => {
     cy.get('[data-cy="nav-static7"]').click();
     cy.get('[data-cy="static-double"]').should("have.text", "Double: 24");
     cy.get('[data-cy="static-triple"]').should("have.text", "Triple: 36");
