@@ -2,7 +2,7 @@
 
 import { ClientApiType } from "./types";
 import { getFetcher, getPostFunction } from "./fetcher";
-import { useMemo } from "react";
+import { MutableRefObject, useMemo, useRef } from "react";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { getBatchFetcher, getBatchPostFunction } from "./batchFetcher";
@@ -48,9 +48,16 @@ export function createClient<
             postFunction,
             options
           );
+          const ownTrigger:  MutableRefObject<(() => any) | null> = useRef(null);
 
-          mutationResult.mutate = useMemo(() => {
-            return (...args: any[]) => mutationResult.trigger(args);
+          mutationResult.trigger = useMemo(() => {
+            if (ownTrigger.current !== mutationResult.trigger) {
+              const swrTrigger = mutationResult.trigger;
+              const trigger = (...args: any[]) => swrTrigger(args);
+              ownTrigger.current = trigger;
+              return trigger
+            }
+            return mutationResult.trigger;
           }, [mutationResult.trigger]);
 
           return mutationResult;

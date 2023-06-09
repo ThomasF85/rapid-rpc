@@ -70,7 +70,7 @@ test.each(fixtures)("client api mutations work", async (fixture: Fixture) => {
     for (let i = 0; i < fixture.events.mutations.length; i++) {
       for (const args of fixture.events.mutations[i].args) {
         //@ts-ignore
-        promises.push(mutationResult.current[i].mutate(...args));
+        promises.push(mutationResult.current[i].trigger(...args));
       }
     }
     await Promise.all(promises);

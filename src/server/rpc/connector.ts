@@ -22,20 +22,14 @@ export function getConnector<
       request: NextRequest,
       params: {
         params: { method: string };
-      },
-      batchArgs?: BatchInputArguments
-    ): Promise<Response> => {
-      let args: any[] | BatchInputArguments = [];
-      if (batchArgs) {
-        args = batchArgs;
-      } else {
-        const input = request.nextUrl.searchParams.get("input");
-        args = input ? JSON.parse(decodeURIComponent(input)) : [];
       }
+    ): Promise<Response> => {
+      const input = request.nextUrl.searchParams.get("input");
+      const args = input ? JSON.parse(decodeURIComponent(input)) : [];
       return await createResponse(
         "query",
         params.params.method,
-        !!batchArgs || !!request.nextUrl.searchParams.get("batch"),
+        !!request.nextUrl.searchParams.get("batch"),
         args,
         internalConnector._get,
         getContext
@@ -45,19 +39,13 @@ export function getConnector<
       request: NextRequest,
       params: {
         params: { method: string };
-      },
-      batchArgs?: BatchInputArguments
-    ): Promise<Response> => {
-      let args: any[] | BatchInputArguments = [];
-      if (batchArgs) {
-        args = batchArgs;
-      } else {
-        args = await request.json();
       }
+    ): Promise<Response> => {
+      const args = await request.json();
       return await createResponse(
         "mutation",
         params.params.method,
-        !!batchArgs || !!request.nextUrl.searchParams.get("batch"),
+        !!request.nextUrl.searchParams.get("batch"),
         args,
         internalConnector._post,
         getContext

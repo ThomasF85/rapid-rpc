@@ -39,7 +39,7 @@ export default function Page() {
     error: errors5,
     mutate: mutateG,
   } = api.getValue.useQuery();
-  const { mutate } = api.addEntry.useMutation({
+  const { trigger:mutate } = api.addEntry.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();

@@ -15,25 +15,25 @@ export default function Page() {
     error: error2,
     mutate: mutateB,
   } = api.getEntries.useQueryOptions({});
-  const { mutate: mutate1 } = api.addEntry.useMutation({
+  const { trigger: mutate1 } = api.addEntry.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
     },
   });
-  const { mutate: mutate2 } = api.addEntry2.useMutation({
+  const { trigger: mutate2 } = api.addEntry2.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
     },
   });
-  const { mutate: mutate3 } = api.addEntry3.useMutation({
+  const { trigger: mutate3 } = api.addEntry3.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
     },
   });
-  const { mutate: mutate4 } = api.addEntry4.useMutation({
+  const { trigger: mutate4 } = api.addEntry4.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();

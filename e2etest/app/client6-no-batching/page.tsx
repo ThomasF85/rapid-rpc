@@ -33,7 +33,7 @@ export default function Page() {
     error: errors3,
     mutate: mutateE,
   } = api.getCallCounts.useQuery();
-  const { mutate } = api.addEntry.useMutation({
+  const { trigger:mutate } = api.addEntry.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
@@ -42,7 +42,7 @@ export default function Page() {
       mutateE();
     },
   });
-  const { mutate: reset } = api.resetCallCount.useMutation({
+  const { trigger: reset } = api.resetCallCount.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();

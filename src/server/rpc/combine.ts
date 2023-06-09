@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Connector } from "./types";
+import { Connector, InternalConnector } from "./types";
 import { BatchInputArguments } from "../../types";
 import { RPCResponse } from "../../types";
 import { getStatus } from "./connector";
@@ -9,6 +9,7 @@ type QandMBaseType = { [key: string]: (...args: any[]) => any };
 type ServerApiType<Q extends QandMBaseType, M extends QandMBaseType> = Q &
   M & { queries: Q; mutations: M };
 
+// @ts-ignore
 export function combine<
   Q1 extends QandMBaseType,
   M1 extends QandMBaseType,
@@ -73,8 +74,7 @@ export function combine<
   connector: Connector
 ];
 
-// TODO: refactor to work with batching
-export function combine(...apis: any[]) {
+export function combine(...apis: [ServerApiType<any, any>, Connector & InternalConnector][]) {
   verifyUniqueMethodNames(apis);
   let serverApi = { queries: {}, mutations: {} };
   for (const api of apis) {
@@ -113,7 +113,7 @@ export function combine(...apis: any[]) {
           decodeURIComponent(input!)
         );
         const methods: string[] = params.params.method.split(",");
-        return batchResult(request, methods, apis, args, true);
+        return batchResult(methods, apis.map(api => api[1]), args, true);
       }
     },
     POST: async (
@@ -138,7 +138,7 @@ export function combine(...apis: any[]) {
       } else {
         const args: BatchInputArguments = await request.json();
         const methods: string[] = params.params.method.split(",");
-        return batchResult(request, methods, apis, args, false);
+        return batchResult(methods, apis.map(api => api[1]), args, false);
       }
     },
   };
@@ -146,13 +146,7 @@ export function combine(...apis: any[]) {
 }
 
 function verifyUniqueMethodNames(
-  apis: [
-    {
-      queries: { [key: string]: (...args: any[]) => any };
-      mutations: { [key: string]: (...args: any[]) => any };
-    },
-    any
-  ][]
+  apis: [ServerApiType<any, any>, Connector & InternalConnector][]
 ) {
   const names: Set<string> = new Set();
   for (const api of apis) {
@@ -176,72 +170,35 @@ function verifyUniqueMethodNames(
 }
 
 async function batchResult(
-  request: Request,
   methods: string[],
-  apis: any[],
+  connectors: (Connector & InternalConnector)[],
   args: BatchInputArguments,
   get: boolean
 ): Promise<Response> {
-  const allocations: {
-    apiIndex: number;
-    methodIndex: number[];
-    args: BatchInputArguments;
-    method: string;
-  }[] = [];
-  const unknownMethodCalls: { index:number, method: string }[] = [];
-  for (let methodIndex = 0; methodIndex < methods.length; methodIndex++) {
-    let found: boolean = false;
-    for (let apiIndex = 0; apiIndex < apis.length; apiIndex++) {
-      if (
-        apis[apiIndex][0][get ? "queries" : "mutations"][methods[methodIndex]]
-      ) {
-        found = true;
-        const allocation = allocations.find((a) => a.apiIndex === apiIndex);
-        if (allocation) {
-          allocation.methodIndex.push(methodIndex);
-          allocation.args[allocation.methodIndex.length - 1] =
-            args[methodIndex];
-          allocation.method += "," + methods[methodIndex];
-        } else {
-          allocations.push({
-            apiIndex,
-            methodIndex: [methodIndex],
-            args: { 0: args[methodIndex] },
-            method: methods[methodIndex],
-          });
-        }
-      }
+  const rpcResponses: (Promise<RPCResponse> | RPCResponse)[] = [];
+  const contexts: Map<Connector & InternalConnector, any> = new Map();
+
+  async function getContext(connector: Connector & InternalConnector): Promise<any> {
+    if (!contexts.has(connector)) {
+      contexts.set(connector, await connector._getContext!())
     }
-    // TODO: refactor
-    if (!found) {
-      unknownMethodCalls.push({ index: methodIndex, method: methods[methodIndex] })
-    }
+    return contexts.get(connector);
   }
-  const responses: { [key: number]: RPCResponse } = {};
-  for (const allocation of allocations) {
-    const response = await apis[allocation.apiIndex][1][get ? "GET" : "POST"](
-      request,
-      {
-        params: {
-          method: allocation.method,
-        },
-      },
-      allocation.args
-    );
-    const allocationResponses: RPCResponse[] = await response.json();
-    for (let i = 0; i < allocationResponses.length; i++) {
-      responses[allocation.methodIndex[i]] = allocationResponses[i];
-    }
-  }
-  for (const unknown of unknownMethodCalls) {
-    responses[unknown.index] = errorResponse.NOT_FOUND(`method ${unknown.method} not found`)
-  }
-  const rpcResponses: RPCResponse[] = [];
+
   for (let i = 0; i < methods.length; i++) {
-    rpcResponses.push(responses[i]);
+    const method = methods[i];
+    const connector: (Connector & InternalConnector) | undefined = connectors.find(api => api[get ? "_get" : "_post"].has(method));
+    if (connector) {
+      const allArgs = connector._getContext ? [await getContext(connector), ...args[i]] : args[i];
+      rpcResponses.push(connector[get ? "_get" : "_post"].get(method)!(...allArgs))
+    } else {
+      rpcResponses.push(errorResponse.NOT_FOUND(`method ${method} not found`))
+    }
   }
-  const status = getStatus(rpcResponses);
+  const response: RPCResponse[] = await Promise.all(rpcResponses);
+
+  const status = getStatus(response);
   return status === 200
-    ? NextResponse.json(rpcResponses)
-    : NextResponse.json(rpcResponses, { status });
+    ? NextResponse.json(response)
+    : NextResponse.json(response, { status });
 }

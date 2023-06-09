@@ -22,7 +22,7 @@ type UseMutation<T extends (...args: any[]) => any> = {
       "fetcher"
     >
   ) => Omit<SWRMutationResponse<Awaited<ReturnType<T>>>, "trigger"> & {
-    mutate: (...args: Parameters<T>) => void;
+    trigger: (...args: Parameters<T>) => void;
   };
 };
 

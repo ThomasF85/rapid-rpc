@@ -75,13 +75,13 @@ import { api } from "@/rpc/client";
 
 export default function MyClientComponent() {
   const { data, isLoading, error, mutate } = api.getRecentTodos.useQuery(10);
-  const { mutate: addTodo } = api.addTodo.useMutation({
+  const { trigger } = api.addTodo.useMutation({
     onSuccess: () => mutate(),
   });
 
-  // You can call addTodo with two arguments anytime like so: addTodo("learn typescript", false)
+  // You can call trigger with two arguments anytime like so: trigger("learn typescript", false)
 
-  ...
+  //...
 }
 ```
 
@@ -97,7 +97,7 @@ import { api } from "@/rpc/client";
 export default function MyClientComponent() {
   const { data, isLoading, error } = api.getRecentTodos.useQueryOptions({ refreshInterval: 5000 }, 10);
 
-  ...
+  //...
 }
 ```
 
@@ -149,11 +149,11 @@ import "server-only";
 import { create, createProtected, combine } from "rapid-rpc";
 
 const publicApi = create({
-  ...
+  //...
 });
 
 const protectedApi = createProtected({
-  ...
+  //...
 });
 
 export const [serverApi, connector] = combine(publicApi, protectedApi);

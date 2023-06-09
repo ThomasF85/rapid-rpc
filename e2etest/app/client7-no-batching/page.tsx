@@ -51,8 +51,8 @@ export default function Page() {
     error: errors6,
     mutate: mutateH,
   } = api.getCount.useQuery();
-  const { mutate: setCount } = api.setCount.useMutation();
-  const { mutate } = api.addEntry.useMutation({
+  const { trigger: setCount } = api.setCount.useMutation();
+  const { trigger:mutate } = api.addEntry.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
@@ -64,7 +64,7 @@ export default function Page() {
       mutateH();
     },
   });
-  const { mutate: reset } = api.resetCallCount.useMutation({
+  const { trigger: reset } = api.resetCallCount.useMutation({
     onSuccess: () => {
       mutateA();
       mutateB();
