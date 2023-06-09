@@ -9,6 +9,12 @@ export default function Page() {
     error: error,
   } = api.getDouble.useQuery(12);
   const {
+    data: nothing,
+    isLoading: loadingx,
+    error: errorx,
+    //@ts-ignore
+  } = api.getNothing.useQuery(12);
+  const {
     data: triple,
     isLoading: loading3,
     error: error3,
@@ -29,6 +35,9 @@ export default function Page() {
       </div>
       <div data-cy="client-triple">
         {error3 ? "error" : loading3 ? "loading" : "Triple: " + triple}
+      </div>
+      <div data-cy="client-nothing">
+        {errorx ? "error" : loadingx ? "loading" : "Nothing: " + nothing}
       </div>
     </>
   );

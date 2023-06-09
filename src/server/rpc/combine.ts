@@ -188,6 +188,7 @@ async function batchResult(
     args: BatchInputArguments;
     method: string;
   }[] = [];
+  const unknownMethodCalls: { index:number, method: string }[] = [];
   for (let methodIndex = 0; methodIndex < methods.length; methodIndex++) {
     let found: boolean = false;
     for (let apiIndex = 0; apiIndex < apis.length; apiIndex++) {
@@ -213,7 +214,7 @@ async function batchResult(
     }
     // TODO: refactor
     if (!found) {
-      return NextResponse.json({ message: "Query not found" }, { status: 404 });
+      unknownMethodCalls.push({ index: methodIndex, method: methods[methodIndex] })
     }
   }
   const responses: { [key: number]: RPCResponse } = {};
@@ -231,6 +232,9 @@ async function batchResult(
     for (let i = 0; i < allocationResponses.length; i++) {
       responses[allocation.methodIndex[i]] = allocationResponses[i];
     }
+  }
+  for (const unknown of unknownMethodCalls) {
+    responses[unknown.index] = errorResponse.NOT_FOUND(`method ${unknown.method} not found`)
   }
   const rpcResponses: RPCResponse[] = [];
   for (let i = 0; i < methods.length; i++) {

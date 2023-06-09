@@ -116,10 +116,11 @@ async function createResponse(
         response.push(
           errorResponse.NOT_FOUND(`${type} ${methodName} not found`)
         );
+      } else {
+        const args: any[] = batchArgs[index];
+        const allArgs = getContext ? [context, ...args] : args;
+        response.push(await procedure!(...allArgs));
       }
-      const args: any[] = batchArgs[index];
-      const allArgs = getContext ? [context, ...args] : args;
-      response.push(await procedure!(...allArgs));
     }
     const status: number = getStatus(response);
     return status === 200
